@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chúc Mừng Năm Mới</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+    }
+
+    body {
+      background-image: url("./imeg/2026-happy-new-year-featuring-golden-letters-and-numbers-on-a-radiant-background-with-two-golden-baubles-free-vector.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .countdown {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 8rem;
+      font-weight: 900;
+      text-shadow: 0 0 25px rgba(0,0,0,0.8);
+      z-index: 2;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .message {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      bottom: 12%;
+      font-size: 3rem;
+      color: #ffeb3b;
+      text-shadow: 0 0 25px #000;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 1s ease;
+      z-index: 3;
+      letter-spacing: 2px;
+    }
+
+    .message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    canvas#fireworks {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="countdown" id="countdown">3</div>
+  <div class="message" id="message">CHÚC MỪNG NĂM MỚI!</div>
+  <canvas id="fireworks"></canvas>
+
+  <script>
+    // ----------------- ĐẾM 3, 2, 1 -----------------
+    const countdownEl = document.getElementById('countdown');
+    const messageEl = document.getElementById('message');
+    let count = 3;
+
+    const interval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        countdownEl.textContent = count;
+        countdownEl.style.transform = 'scale(1.1)';
+        countdownEl.style.opacity = '0.9';
+        setTimeout(() => {
+          countdownEl.style.transform = 'scale(1)';
+          countdownEl.style.opacity = '1';
+        }, 150);
+      } else {
+        clearInterval(interval);
+        countdownEl.style.display = 'none';
+        messageEl.classList.add('show');
+        startFireworks();
+      }
+    }, 1000);
+
+    // ----------------- HIỆU ỨNG PHÁO HOA -----------------
+    function startFireworks() {
+      const canvas = document.getElementById('fireworks');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      const fireworks = [];
+      const particles = [];
+      const colors = ['#ff4b5c', '#ffd93d', '#3ae374', '#18dcff', '#ff9f1a', '#ff6b81', '#ffffff', '#9b59b6'];
+      let flashAlpha = 0;
+
+      class Firework {
+        constructor(x, y, targetY, color) {
+          this.x = x;
+          this.y = y;
+          this.startY = y;
+          this.targetY = targetY;
+          this.color = color;
+          this.speed = (this.y - this.targetY) / 25; // bay nhanh hơn
+          this.vx = (Math.random() - 0.5) * 1.2;     // hơi lệch ngang
+          this.alpha = 1;
+          this.trail = [];
+          this.trailLength = 15;                     // vệt dài hơn
+        }
+        update(i) {
+          this.trail.push({ x: this.x, y: this.y });
+          if (this.trail.length > this.trailLength) this.trail.shift();
+
+          this.x += this.vx;
+          this.y -= this.speed;
+
+          // tới đỉnh thì nổ
+          if (this.y <= this.targetY) {
+            createBurst(this.x, this.y, this.color);
+            fireworks.splice(i, 1);
+            flashAlpha = 0.7;
+          }
+        }
+        draw() {
+          ctx.save();
+          ctx.globalAlpha = this.alpha;
+          // vệt sáng thẳng, giống tia lửa phụt lên
+          if (this.trail.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.trail[0].x, this.trail[0].y);
+            for (let j = 1; j < this.trail.length; j++) {
+              const t = this.trail[j];
+              ctx.lineTo(t.x, t.y);
+            }
+            const grad = ctx.createLinearGradient(this.x, this.startY, this.x, this.y);
+            grad.addColorStop(0, 'rgba(255,255,255,0)');
+            grad.addColorStop(1, this.color);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+          }
+
+          // đầu pháo sáng hơn
+          ctx.beginPath();
+          ctx.fillStyle = '#ffffff';
+          ctx.arc(this.x, this.y, 3.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      class Particle {
+        constructor(x, y, color) {
+          this.x = x;
+          this.y = y;
+          this.color = color;
+          this.radius = Math.random() * 2.5 + 1.5;
+          this.speed = Math.random() * 6 + 2;
+          this.angle = Math.random() * Math.PI * 2;
+          this.friction = 0.95;
+          this.gravity = 0.04; // rơi cong nhiều hơn
+          this.alpha = 1;
+          this.decay = Math.random() * 0.02 + 0.01;
+        }
+        update(i) {
+          this.speed *= this.friction;
+          this.x += Math.cos(this.angle) * this.speed;
+          this.y += Math.sin(this.angle) * this.speed + this.gravity;
+          this.alpha -= this.decay;
+          if (this.alpha <= 0) {
+            particles.splice(i, 1);
+          }
+        }
+        draw() {
+          ctx.save();
+          ctx.globalAlpha = this.alpha;
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          // nháy lấp lánh
+          if (Math.random() > 0.8) {
+            ctx.globalAlpha = this.alpha * 0.6;
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(this.x - 1, this.y - 1, 2, 2);
+          }
+          ctx.restore();
+        }
+      }
+
+      // vụ nổ chính: tia tỏa tròn + vài tầng phụ
+      function createBurst(x, y, color) {
+        const mainCount = 120;
+        for (let i = 0; i < mainCount; i++) {
+          const p = new Particle(x, y, color);
+          particles.push(p);
+        }
+
+        // vòng tròn chuẩn (tròn đều)
+        const ringCount = 60;
+        for (let i = 0; i < ringCount; i++) {
+          const angle = (Math.PI * 2 * i) / ringCount;
+          const ring = new Particle(x, y, color);
+          ring.speed = 5;
+          ring.angle = angle;
+          ring.decay = 0.012;
+          particles.push(ring);
+        }
+
+        // thêm một tầng phụ nhỏ hơn, hơi lệch xuống dưới cho giống pháo hoa nhiều lớp
+        const innerCount = 40;
+        for (let i = 0; i < innerCount; i++) {
+          const angle = (Math.PI * 2 * i) / innerCount;
+          const inner = new Particle(x, y + 8, color);
+          inner.speed = 3.2;
+          inner.angle = angle;
+          inner.decay = 0.018;
+          particles.push(inner);
+        }
+      }
+
+      function createRandomFirework() {
+        const x = Math.random() * w * 0.8 + w * 0.1;
+        const y = h + 10;
+        const targetY = Math.random() * (h * 0.45) + h * 0.1;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        // mỗi lần tạo 1–3 tia bay lên từ cùng một gốc cho giống chùm pháo
+        const rockets = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < rockets; i++) {
+          fireworks.push(new Firework(x + (i - (rockets - 1) / 2) * 10, y, targetY, color));
+        }
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'lighter';
+
+        fireworks.forEach((fw, i) => {
+          fw.update(i);
+          fw.draw();
+        });
+
+        particles.forEach((p, i) => {
+          p.update(i);
+          p.draw();
+        });
+
+        if (Math.random() < 0.08) {
+          createRandomFirework();
+        }
+
+        // chớp sáng toàn màn hình khi nổ
+        if (flashAlpha > 0) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+          ctx.fillRect(0, 0, w, h);
+          ctx.restore();
+          flashAlpha -= 0.02;
+        }
+      }
+
+      for (let i = 0; i < 8; i++) setTimeout(createRandomFirework, i * 180);
+
+      animate();
+    }
+  </script>
+</body>
+</html>
+
