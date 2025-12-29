@@ -240,21 +240,21 @@
             ctx.stroke();
           }
 
-          // đầu tia sáng hơn một chút
+          // đầu tia sáng hơn một chút (không để quá trắng tránh nháy)
           ctx.beginPath();
           ctx.fillStyle = this.color;
           ctx.arc(this.x, this.y, this.radius * 1.4, 0, Math.PI * 2);
           ctx.fill();
 
-          // lấp lánh nhẹ ở đầu tia
-          if (Math.random() > 0.88) {
-            const glowRadius = this.radius * 3;
+          // lấp lánh nhẹ ở đầu tia (màu cùng tông, giảm trắng)
+          if (Math.random() > 0.9) {
+            const glowRadius = this.radius * 2.5;
             const glow = ctx.createRadialGradient(
               this.x, this.y, 0,
               this.x, this.y, glowRadius
             );
-            glow.addColorStop(0, 'rgba(255,255,255,0.6)');
-            glow.addColorStop(1, 'rgba(255,255,255,0)');
+            glow.addColorStop(0, `${hexToRgba(this.color, 0.45)}`);
+            glow.addColorStop(1, `${hexToRgba(this.color, 0)}`);
             ctx.fillStyle = glow;
             ctx.beginPath();
             ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
@@ -263,6 +263,16 @@
 
           ctx.restore();
         }
+      }
+
+      // chuyển mã hex sang rgba string
+      function hexToRgba(hex, alpha) {
+        const clean = hex.replace('#', '');
+        const num = parseInt(clean, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
       }
 
       // vụ nổ chính: tia tỏa tròn + vài tầng phụ
