@@ -123,7 +123,18 @@
 
       const fireworks = [];
       const particles = [];
-      const colors = ['#ff4b5c', '#ffd93d', '#3ae374', '#18dcff', '#ff9f1a', '#ff6b81', '#ffffff', '#9b59b6'];
+      // tông màu hồng – tím – vàng giống ảnh pháo hoa nghệ thuật
+      const colors = [
+        '#ff4b5c',
+        '#ff66cc',
+        '#ff8ae2',
+        '#ffd93d',
+        '#ff9f1a',
+        '#ff6b81',
+        '#ffffff',
+        '#9b59b6',
+        '#7f00ff'
+      ];
 
       class Firework {
         constructor(x, y, targetY, color) {
@@ -184,15 +195,20 @@
           this.x = x;
           this.y = y;
           this.color = color;
-          this.radius = Math.random() * 2.2 + 1.3;
-          this.speed = Math.random() * 6.5 + 2.5;
+          this.radius = Math.random() * 1.8 + 0.8;        // hạt nhỏ, nhiều tia
+          this.speed = Math.random() * 6 + 3;
           this.angle = Math.random() * Math.PI * 2;
-          this.friction = 0.95;
-          this.gravity = 0.04; // rơi cong nhiều hơn
+          this.friction = 0.96;
+          this.gravity = 0.035;
           this.alpha = 1;
-          this.decay = Math.random() * 0.018 + 0.008;
+          this.decay = Math.random() * 0.015 + 0.006;     // tồn tại lâu hơn
+          this.trail = [];
+          this.trailLength = 10 + Math.floor(Math.random() * 8);
         }
         update(i) {
+          this.trail.push({ x: this.x, y: this.y });
+          if (this.trail.length > this.trailLength) this.trail.shift();
+
           this.speed *= this.friction;
           this.x += Math.cos(this.angle) * this.speed;
           this.y += Math.sin(this.angle) * this.speed + this.gravity;
@@ -204,32 +220,54 @@
         draw() {
           ctx.save();
           ctx.globalAlpha = this.alpha;
-          ctx.fillStyle = this.color;
+
+          // vệt tia mảnh (stroke) cho cảm giác rất nhiều tia nhỏ
+          if (this.trail.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.trail[0].x, this.trail[0].y);
+            for (let j = 1; j < this.trail.length; j++) {
+              const t = this.trail[j];
+              ctx.lineTo(t.x, t.y);
+            }
+            const grad = ctx.createLinearGradient(
+              this.trail[0].x, this.trail[0].y,
+              this.x, this.y
+            );
+            grad.addColorStop(0, 'rgba(255,255,255,0)');
+            grad.addColorStop(1, this.color);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+          }
+
+          // đầu tia sáng hơn một chút
           ctx.beginPath();
-          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.arc(this.x, this.y, this.radius * 1.4, 0, Math.PI * 2);
           ctx.fill();
-          // nháy lấp lánh tinh tế như pháo hoa nghệ thuật
-          if (Math.random() > 0.85) {
-            ctx.globalAlpha = this.alpha;
-            const glowRadius = this.radius * 2.5;
-            const grad = ctx.createRadialGradient(
+
+          // lấp lánh nhẹ ở đầu tia
+          if (Math.random() > 0.88) {
+            const glowRadius = this.radius * 3;
+            const glow = ctx.createRadialGradient(
               this.x, this.y, 0,
               this.x, this.y, glowRadius
             );
-            grad.addColorStop(0, 'rgba(255,255,255,0.9)');
-            grad.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = grad;
+            glow.addColorStop(0, 'rgba(255,255,255,0.6)');
+            glow.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = glow;
             ctx.beginPath();
             ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
             ctx.fill();
           }
+
           ctx.restore();
         }
       }
 
       // vụ nổ chính: tia tỏa tròn + vài tầng phụ
       function createBurst(x, y, color) {
-        const mainCount = 140;
+        const mainCount = 160; // nhiều tia nhỏ hơn
         for (let i = 0; i < mainCount; i++) {
           const p = new Particle(x, y, color);
           particles.push(p);
