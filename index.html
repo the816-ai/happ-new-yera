@@ -195,15 +195,15 @@
           this.x = x;
           this.y = y;
           this.color = color;
-          this.radius = Math.random() * 1.8 + 0.8;        // hạt nhỏ, nhiều tia
-          this.speed = Math.random() * 6 + 3;
+          this.radius = Math.random() * 1.6 + 0.8;        // hạt nhỏ
+          this.speed = Math.random() * 5 + 3;
           this.angle = Math.random() * Math.PI * 2;
-          this.friction = 0.96;
+          this.friction = 0.97;
           this.gravity = 0.035;
           this.alpha = 1;
-          this.decay = Math.random() * 0.015 + 0.006;     // tồn tại lâu hơn
+          this.decay = Math.random() * 0.02 + 0.01;       // tan nhanh hơn giảm số lượng
           this.trail = [];
-          this.trailLength = 10 + Math.floor(Math.random() * 8);
+          this.trailLength = 6 + Math.floor(Math.random() * 5); // vệt ngắn hơn
         }
         update(i) {
           this.trail.push({ x: this.x, y: this.y });
@@ -277,14 +277,14 @@
 
       // vụ nổ chính: tia tỏa tròn + vài tầng phụ
       function createBurst(x, y, color) {
-        const mainCount = 160; // nhiều tia nhỏ hơn
+        const mainCount = 110; // ít hạt hơn cho nhanh hơn
         for (let i = 0; i < mainCount; i++) {
           const p = new Particle(x, y, color);
           particles.push(p);
         }
 
         // vòng tròn chuẩn (tròn đều)
-        const ringCount = 70;
+        const ringCount = 45;
         for (let i = 0; i < ringCount; i++) {
           const angle = (Math.PI * 2 * i) / ringCount;
           const ring = new Particle(x, y, color);
@@ -295,7 +295,7 @@
         }
 
         // thêm một tầng phụ nhỏ hơn, hơi lệch xuống dưới cho giống pháo hoa nhiều lớp
-        const innerCount = 45;
+        const innerCount = 30;
         for (let i = 0; i < innerCount; i++) {
           const angle = (Math.PI * 2 * i) / innerCount;
           const inner = new Particle(x, y + 8, color);
@@ -312,11 +312,11 @@
         const baseX = Math.random() * w * 0.8 + w * 0.1;
         const fanColor = colors[Math.floor(Math.random() * colors.length)];
 
-        const fanRays = 40;
+        const fanRays = 26;
         for (let i = 0; i < fanRays; i++) {
           const angle = (Math.PI / 2) + (i - fanRays / 2) * (Math.PI / fanRays);
           const p = new Particle(baseX, baseY, fanColor);
-          p.speed = Math.random() * 4 + 3;
+          p.speed = Math.random() * 3.5 + 2.5;
           p.angle = angle;
           p.gravity = 0.06;
           p.decay = 0.018;
@@ -356,9 +356,9 @@
         });
 
         // pháo hoa tròn trên bầu trời
-        if (Math.random() < 0.07) createRandomFirework();
+        if (Math.random() < 0.05) createRandomFirework();
         // pháo hoa dạng quạt dưới chân trời
-        if (Math.random() < 0.03) createFanFirework();
+        if (Math.random() < 0.02) createFanFirework();
       }
 
       for (let i = 0; i < 8; i++) setTimeout(createRandomFirework, i * 180);
